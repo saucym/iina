@@ -12,9 +12,9 @@ PODS:
   - Sparkle (1.21.2)
 
 DEPENDENCIES:
-  - GRMustache.swift (from `https://github.com/iina/GRMustache.swift.git`)
+  - GRMustache.swift (from `https://github.com/iina/GRMustache.swift`)
   - GzipSwift
-  - Just (from `https://github.com/JustHTTP/Just.git`)
+  - Just (from `https://github.com/iina/Just`, branch `swift-5`)
   - PromiseKit
   - Sparkle
 
@@ -26,17 +26,18 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   GRMustache.swift:
-    :git: https://github.com/iina/GRMustache.swift.git
+    :git: https://github.com/iina/GRMustache.swift
   Just:
-    :git: https://github.com/JustHTTP/Just.git
+    :branch: swift-5
+    :git: https://github.com/iina/Just
 
 CHECKOUT OPTIONS:
   GRMustache.swift:
     :commit: 3e6778e4b8a134e3f96d04d6c15c7213bd7d9935
-    :git: https://github.com/iina/GRMustache.swift.git
+    :git: https://github.com/iina/GRMustache.swift
   Just:
-    :commit: b314be4ac8652b66182cfbd4a9893dfcb3808bbf
-    :git: https://github.com/JustHTTP/Just.git
+    :commit: aeb7df1382726d970c1712bd46f9ba974bc84dcf
+    :git: https://github.com/iina/Just
 
 SPEC CHECKSUMS:
   GRMustache.swift: 53405b02c374520f9193cf41bfa677f03a6d70aa
@@ -45,6 +46,6 @@ SPEC CHECKSUMS:
   PromiseKit: 94c6e781838c5bf4717677d0d882b0e7250c80fc
   Sparkle: 1678d4707e7665960c7d1b43aca125e6392d11c4
 
-PODFILE CHECKSUM: c149e2f5a370325310fa22313fe8c514d0967750
+PODFILE CHECKSUM: 3b7335d88163c6900617a741deb033baa6f7681e
 
 COCOAPODS: 1.6.1
