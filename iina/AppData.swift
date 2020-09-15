@@ -11,7 +11,8 @@ import Cocoa
 struct AppData {
 
   /** time interval to sync play pos */
-  static let getTimeInterval: Double = 0.1
+  static let syncTimeInterval: Double = 0.1
+  static let syncTimePreciseInterval: Double = 0.04
 
   /** speed values when clicking left / right arrow button */
 
@@ -42,11 +43,12 @@ struct AppData {
   static let watchLaterFolder = "watch_later"
   static let historyFile = "history.plist"
   static let thumbnailCacheFolder = "thumb_cache"
+  static let screenshotCacheFolder = "screenshot_cache"
 
-  static let githubLink = "https://github.com/lhc70000/iina"
-  static let contributorsLink = "https://github.com/lhc70000/iina/graphs/contributors"
-  static let wikiLink = "https://github.com/lhc70000/iina/wiki"
-  static let websiteLink = "https://lhc70000.github.io/iina/"
+  static let githubLink = "https://github.com/iina/iina"
+  static let contributorsLink = "https://github.com/iina/iina/graphs/contributors"
+  static let wikiLink = "https://github.com/iina/iina/wiki"
+  static let websiteLink = "https://iina.io"
   static let emailLink = "developers@iina.io"
   static let ytdlHelpLink = "https://github.com/rg3/youtube-dl/blob/master/README.md#readme"
   static let appcastLink = "https://www.iina.io/appcast.xml"
@@ -55,8 +57,8 @@ struct AppData {
   static let chromeExtensionLink = "https://chrome.google.com/webstore/detail/open-in-iina/pdnojahnhpgmdhjdhgphgdcecehkbhfo"
   static let firefoxExtensionLink = "https://addons.mozilla.org/addon/open-in-iina-x"
 
-  static let widthWhenNoVideo = 480
-  static let heightWhenNoVideo = 480
+  static let widthWhenNoVideo = 640
+  static let heightWhenNoVideo = 360
   static let sizeWhenNoVideo = NSSize(width: widthWhenNoVideo, height: heightWhenNoVideo)
 }
 
@@ -79,6 +81,7 @@ struct Constants {
     static let subDelay = "Subtitle Delay"
     static let pip = NSLocalizedString("menu.pip", comment: "Enter Picture-in-Picture")
     static let exitPIP = NSLocalizedString("menu.exit_pip", comment: "Exit Picture-in-Picture")
+    static let custom = NSLocalizedString("menu.crop_custom", comment: "Custom crop size")
   }
   struct Time {
     static let infinite = VideoTime(999, 0, 0)

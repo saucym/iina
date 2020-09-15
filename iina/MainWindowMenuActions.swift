@@ -113,8 +113,7 @@ extension MainWindowController {
   }
 
   @objc func menuAlwaysOnTop(_ sender: AnyObject) {
-    isOntop = !isOntop
-    setWindowFloatingOnTop(isOntop)
+    setWindowFloatingOnTop(!isOntop)
   }
 
   @available(macOS 10.12, *)
@@ -187,7 +186,7 @@ extension MainWindowController {
         }
       }
     }
-    if let vfWindow = (NSApp.delegate as? AppDelegate)?.vfWindow, vfWindow.isWindowLoaded {
+    if let vfWindow = (NSApp.delegate as? AppDelegate)?.vfWindow, vfWindow.loaded {
       vfWindow.reloadTable()
     }
   }

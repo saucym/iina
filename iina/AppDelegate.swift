@@ -12,7 +12,7 @@ import Sparkle
 
 /** Max time interval for repeated `application(_:openFile:)` calls. */
 fileprivate let OpenFileRepeatTime = TimeInterval(0.2)
-/** Tags for "Open File/URL" menu item when "ALways open file in new windows" is off. Vice versa. */
+/** Tags for "Open File/URL" menu item when "Always open file in new windows" is off. Vice versa. */
 fileprivate let NormalMenuItemTag = 0
 /** Tags for "Open File/URL in New Window" when "Always open URL" when "Open file in new windows" is off. Vice versa. */
 fileprivate let AlternativeMenuItemTag = 1
@@ -46,6 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   lazy var fontPicker: FontPickerWindowController = FontPickerWindowController()
   lazy var inspector: InspectorWindowController = InspectorWindowController()
   lazy var historyWindow: HistoryWindowController = HistoryWindowController()
+  lazy var guideWindow: GuideWindowController = GuideWindowController()
 
   lazy var vfWindow: FilterWindowController = {
     let w = FilterWindowController()
@@ -89,14 +90,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     registerUserDefaultValues()
     Logger.log("App will launch")
 
+    let (version, build) = Utility.iinaVersion()
+
     // register for url event
     NSAppleEventManager.shared().setEventHandler(self, andSelector: #selector(self.handleURLEvent(event:withReplyEvent:)), forEventClass: AEEventClass(kInternetEventClass), andEventID: AEEventID(kAEGetURL))
 
-    // beta channel
-    if FirstRunManager.isFirstRun(for: .joinBetaChannel) {
-      let result = Utility.quickAskPanel("beta_channel")
-      Preference.set(result, for: .receiveBetaUpdate)
+    // guide window
+    if FirstRunManager.isFirstRun(for: .init("firstLaunchAfter\(version)")) {
+      guideWindow.show(pages: [.highlights])
     }
+
     SUUpdater.shared().feedURL = URL(string: Preference.bool(for: .receiveBetaUpdate) ? AppData.appcastBetaLink : AppData.appcastLink)!
 
     // handle arguments
@@ -131,7 +134,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     Logger.log("Filenames from arguments: \(iinaArgFilenames)")
     commandLineStatus.parseArguments(iinaArgs)
 
-    let (version, build) = Utility.iinaVersion()
     print("IINA \(version) Build \(build)")
 
     guard !iinaArgFilenames.isEmpty || commandLineStatus.isStdin else {
@@ -207,7 +209,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       }
 
       // enter PIP
-      if #available(OSX 10.12, *), let pc = lastPlayerCore, commandLineStatus.enterPIP {
+      if #available(macOS 10.12, *), let pc = lastPlayerCore, commandLineStatus.enterPIP {
         pc.mainWindow.enterPIP()
       }
     }
@@ -244,7 +246,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-    guard PlayerCore.active.mainWindow.isWindowLoaded || PlayerCore.active.initialWindow.isWindowLoaded else { return false }
+    guard PlayerCore.active.mainWindow.loaded || PlayerCore.active.initialWindow.loaded else { return false }
     guard !PlayerCore.active.mainWindow.isWindowHidden else { return false }
     return Preference.bool(for: .quitWhenNoOpenedWindow)
   }
@@ -370,10 +372,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
       // new_window
       let player: PlayerCore
-      if let newWindowValue = queryDict["new_window"], newWindowValue == "0" {
-        player = PlayerCore.active
-      } else {
+      if let newWindowValue = queryDict["new_window"], newWindowValue == "1" {
         player = PlayerCore.newPlayerCore
+      } else {
+        player = PlayerCore.activeOrNewForMenuAction(isAlternative: false)
       }
 
       // enqueue
@@ -391,7 +393,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         player.mpv.setFlag(MPVOption.Window.fullscreen, true)
       } else if let pipValue = queryDict["pip"], pipValue == "1" {
         // pip
-        if #available(OSX 10.12, *) {
+        if #available(macOS 10.12, *) {
           player.mainWindow.enterPIP()
         }
       }
@@ -478,6 +480,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     historyWindow.showWindow(self)
   }
 
+  @IBAction func showHighlights(_ sender: AnyObject) {
+    guideWindow.show(pages: [.highlights])
+  }
+
   @IBAction func helpAction(_ sender: AnyObject) {
     NSWorkspace.shared.open(URL(string: AppData.wikiLink)!)
   }
@@ -554,15 +560,15 @@ class RemoteCommandController {
 
   static func setup() {
     remoteCommand.playCommand.addTarget { _ in
-      PlayerCore.lastActive.togglePause(false)
+      PlayerCore.lastActive.resume()
       return .success
     }
     remoteCommand.pauseCommand.addTarget { _ in
-      PlayerCore.lastActive.togglePause(true)
+      PlayerCore.lastActive.pause()
       return .success
     }
     remoteCommand.togglePlayPauseCommand.addTarget { _ in
-      PlayerCore.lastActive.togglePause(nil)
+      PlayerCore.lastActive.togglePause()
       return .success
     }
     remoteCommand.stopCommand.addTarget { _ in

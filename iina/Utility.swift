@@ -8,11 +8,13 @@
 
 import Cocoa
 
+typealias PK = Preference.Key
+
 class Utility {
 
   static let supportedFileExt: [MPVTrack.TrackType: [String]] = [
     .video: ["mkv", "mp4", "avi", "m4v", "mov", "3gp", "ts", "mts", "m2ts", "wmv", "flv", "f4v", "asf", "webm", "rm", "rmvb", "qt", "dv", "mpg", "mpeg", "mxf", "vob", "gif"],
-    .audio: ["mp3", "aac", "mka", "dts", "flac", "ogg", "oga", "mogg", "m4a", "ac3", "opus", "wav", "wv", "aiff", "ape", "tta", "tak"],
+    .audio: ["mp3", "aac", "mka", "dts", "flac", "ogg", "oga", "mogg", "m4a", "ac3", "opus", "wav", "wv", "aiff", "aif", "ape", "tta", "tak"],
     .sub: ["utf", "utf8", "utf-8", "idx", "sub", "srt", "smi", "rt", "ssa", "aqt", "jss", "js", "ass", "mks", "vtt", "sup", "scc"]
   ]
   static let playableFileExt = supportedFileExt[.video]! + supportedFileExt[.audio]!
@@ -34,6 +36,8 @@ class Utility {
       alert.messageText = NSLocalizedString("alert.title_info", comment: "Information")
     case .warning:
       alert.messageText = NSLocalizedString("alert.title_warning", comment: "Warning")
+    @unknown default:
+      assertionFailure("Unknown \(type(of: alertStyle)) \(alertStyle)")
     }
     alert.informativeText = message
     alert.alertStyle = alertStyle
@@ -49,6 +53,8 @@ class Utility {
       alert.messageText = NSLocalizedString("alert.title_info", comment: "Information")
     case .warning:
       alert.messageText = NSLocalizedString("alert.title_warning", comment: "Warning")
+    @unknown default:
+      assertionFailure("Unknown \(type(of: style)) \(style)")
     }
 
     var format: String
@@ -361,16 +367,25 @@ class Utility {
     createDirIfNotExist(url: url)
     return url
   }()
-
-  static let thumbnailCacheURL: URL = {
-    // get path
+  
+  static let cacheURL: URL = {
     let cachesPath = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)
     Logger.ensure(cachesPath.count >= 1, "Cannot get path to Caches directory")
     let bundleID = Bundle.main.bundleIdentifier!
     let appCachesUrl = cachesPath.first!.appendingPathComponent(bundleID, isDirectory: true)
-    let appThumbnailCacheUrl = appCachesUrl.appendingPathComponent(AppData.thumbnailCacheFolder, isDirectory: true)
+    return appCachesUrl
+  }()
+
+  static let thumbnailCacheURL: URL = {
+    let appThumbnailCacheUrl = cacheURL.appendingPathComponent(AppData.thumbnailCacheFolder, isDirectory: true)
     createDirIfNotExist(url: appThumbnailCacheUrl)
     return appThumbnailCacheUrl
+  }()
+  
+  static let screenshotCacheURL: URL = {
+    let url = cacheURL.appendingPathComponent(AppData.screenshotCacheFolder, isDirectory: true)
+    createDirIfNotExist(url: url)
+    return url
   }()
 
   static let playbackHistoryURL: URL = {
@@ -427,7 +442,7 @@ class Utility {
     }
   }
 
-  // Do not use this function for macOS 10.14+
+  @available(macOS, deprecated: 10.14, message: "Use the system appearance-based APIs instead.")
   static func getAppearanceAndMaterial(from theme: Preference.Theme) -> (NSAppearance?, NSVisualEffectView.Material) {
     switch theme {
     case .ultraDark:
@@ -439,6 +454,25 @@ class Utility {
     default:
       return (NSAppearance(named: .vibrantDark), .dark)
     }
+  }
+
+  static func getLatestScreenshot(from path: String) -> URL? {
+    let folder = URL(fileURLWithPath: NSString(string: path).expandingTildeInPath)
+    guard let contents = try? FileManager.default.contentsOfDirectory(
+      at: folder,
+      includingPropertiesForKeys: [.creationDateKey],
+      options: .skipsSubdirectoryDescendants) else { return nil }
+
+    var latestDate = Date.distantPast
+    var latestFile: URL = contents[0]
+
+    for file in contents {
+      if let date = try? file.resourceValues(forKeys: [.creationDateKey]).creationDate, date > latestDate {
+        latestDate = date
+        latestFile = file
+      }
+    }
+    return latestFile
   }
 
   // MARK: - Util classes
