@@ -14,6 +14,12 @@ fileprivate extension QuickSettingViewController.TabViewType {
   }
 }
 
+@available(OSX 10.14, *)
+fileprivate extension NSColor {
+  static let sidebarTabTint: NSColor = NSColor(named: .sidebarTabTint)!
+  static let sidebarTabTintActive: NSColor = NSColor(named: .sidebarTabTintActive)!
+}
+
 class QuickSettingViewController: NSViewController, NSTableViewDataSource, NSTableViewDelegate, SidebarViewController {
 
   override var nibName: NSNib.Name {
@@ -132,7 +138,9 @@ class QuickSettingViewController: NSViewController, NSTableViewDataSource, NSTab
       withAllTableViews { tableView, _ in tableView.backgroundColor = NSColor(named: .sidebarTableBackground)! }
     }
 
-    if pendingSwitchRequest != nil {
+    if pendingSwitchRequest == nil {
+      updateTabActiveStatus(withCurrentButton: videoTabBtn)
+    } else {
       switchToTab(pendingSwitchRequest!)
       pendingSwitchRequest = nil
     }
@@ -374,6 +382,16 @@ class QuickSettingViewController: NSViewController, NSTableViewDataSource, NSTab
     updateControlsState()
   }
 
+  private func updateTabActiveStatus(withCurrentButton sender: NSButton) {
+    [videoTabBtn, audioTabBtn, subTabBtn].forEach { btn in
+      if #available(OSX 10.14, *) {
+        btn!.contentTintColor = btn == sender ? .sidebarTabTintActive : .sidebarTabTint
+      } else {
+        Utility.setBoldTitle(for: btn!, btn == sender)
+      }
+    }
+  }
+
   private func withAllTableViews(_ block: (NSTableView, MPVTrack.TrackType) -> Void) {
     block(audioTableView, .audio)
     block(subTableView, .sub)
@@ -394,7 +412,7 @@ class QuickSettingViewController: NSViewController, NSTableViewDataSource, NSTab
 
   @IBAction func tabBtnAction(_ sender: NSButton) {
     tabView.selectTabViewItem(at: sender.tag)
-    [videoTabBtn, audioTabBtn, subTabBtn].forEach { Utility.setBoldTitle(for: $0, $0 == sender) }
+    updateTabActiveStatus(withCurrentButton: sender)
     currentTab = .init(buttonTag: sender.tag)
     reload()
   }
